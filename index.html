@@ -19,9 +19,11 @@
         }
 
         .nav-button-dark {
+            /* Tailwind classes for dark theme button */
             @apply w-full sm:w-auto text-white border-2 border-red-600 hover:bg-red-600 transition duration-300 rounded-lg px-4 py-2 font-cinzel tracking-wider shadow-lg;
         }
         .nav-button-cute {
+            /* Tailwind classes for cute theme button */
             @apply w-full sm:w-auto text-gray-800 border-2 border-pink-700 bg-pink-500 hover:bg-pink-400 transition duration-300 rounded-lg px-4 py-2 font-inter shadow-xl;
         }
     </style>
@@ -43,21 +45,27 @@
     </div>
 
     <script>
+        // --- Gemini API Configuration ---
         const apiKey = "";
         const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=' + apiKey;
-        const systemPrompt = "You are a melodramatic, overly academic, and highly persuasive research assistant working for Dr. Carballo's Latin Department at Ardsley Lab. The goal is to write a short, formal plea (like a research abstract or executive summary) to Dr. Carballo, convincing him to supply candy sacrifices to Neha Ramchandani to defeat the evil 'Wang'. Incorporate cryptic, formal language. The plea must be brief (3-4 sentences max), use scholarly vocabulary, and maintain an urgent, dramatic tone.";
 
+        // System prompt defining the AI's persona and task for the plea generation
+        const systemPrompt = "Act as an overly dramatic and highly academic research assistant in Dr. Carballo's Latin Department. Write a formal, urgent plea (3-4 sentences max) to Dr. Carballo, demanding candy sacrifices for Neha Ramchandani to neutralize the threat 'Wang'. Use scholarly vocabulary, and cryptic language.";
+
+        // --- Utility Function for API Calls with Retry (Exponential Backoff) ---
         async function fetchWithRetry(url, options, maxRetries = 5) {
             for (let i = 0; i < maxRetries; i++) {
                 try {
                     const response = await fetch(url, options);
                     if (response.status === 429 && i < maxRetries - 1) {
+                        // Retry logic for rate limiting (429 status)
                         const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
                         await new Promise(resolve => setTimeout(resolve, delay));
                         continue;
                     }
                     if (!response.ok) {
-                        throw new Error('API error: ' + response.statusText);
+                        // Throw specific error for debugging if non-retryable status
+                        throw new Error(`API error: ${response.statusText} (Status: ${response.status})`);
                     }
                     return response;
                 } catch (error) {
@@ -66,22 +74,26 @@
             }
         }
         
+        // --- Core Function to Generate the Plea ---
         async function generatePlea() {
             const contributorName = document.getElementById('contributorName').value.trim();
             const resultsDiv = document.getElementById('plea-results');
             const loadingSpinner = document.getElementById('loading-spinner');
             
+            // Input validation
             if (!contributorName) {
                 resultsDiv.innerHTML = '<p class="text-red-500 font-bold mt-4">ERROR: Please enter your name or alias to proceed with the petition. Protocol requires identification.</p>';
                 return;
             }
 
+            // Show loading state
             loadingSpinner.classList.remove('hidden');
             resultsDiv.innerHTML = '';
             
             const userQuery = 'Generate a highly urgent plea on behalf of contributor: "' + contributorName + '" to secure the necessary candy sacrifices from Dr. Carballo.';
 
             try {
+                // Call the Gemini API
                 const response = await fetchWithRetry(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -92,9 +104,12 @@
                 });
                 
                 const result = await response.json();
+                
+                // Extract and format the generated text
                 const rawGeneratedText = result.candidates?.[0]?.content?.parts?.[0]?.text || "Error: Failed to generate plea. Dark forces have intercepted the signal.";
                 const htmlText = rawGeneratedText.replace(/\n/g, '<br>');
 
+                // Display the results
                 resultsDiv.innerHTML =
                     '<h3 class="text-2xl font-cinzel text-red-300 mt-8 mb-4">The Official Petition to Dr. Carballo</h3>' +
                     '<div id="generated-plea-container" class="bg-red-800 p-6 rounded-lg border border-red-500 shadow-inner">' +
@@ -104,13 +119,20 @@
 
             } catch (error) {
                 console.error("Gemini API Error:", error);
-                resultsDiv.innerHTML = '<p class="text-red-500 font-bold mt-4">System failure: The dark forces of the Wang are interfering with the communication relay. Try again!</p>';
+                // Display user-friendly error message, including status if available
+                const errorMessage = error.message.includes('API error') 
+                    ? `System failure: ${error.message}. Try again!` 
+                    : 'System failure: The dark forces of the Wang are interfering with the communication relay. Try again!';
+                
+                resultsDiv.innerHTML = `<p class="text-red-500 font-bold mt-4">${errorMessage}</p>`;
             } finally {
+                // Hide loading state
                 loadingSpinner.classList.add('hidden');
             }
         }
 
 
+        // --- Page Navigation Data ---
         const pageData = {
             'home': {
                 navTitle: 'Home',
