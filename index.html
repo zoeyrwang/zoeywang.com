@@ -4,148 +4,192 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>zoeywang.com</title>
-    <!-- Load Tailwind CSS CDN for styling -->
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom font for a dramatic look */
+
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;700&display=swap');
         .font-cinzel { font-family: 'Cinzel', serif; }
         .font-inter { font-family: 'Inter', sans-serif; }
 
-        /* Smooth page transition */
+
         .content-transition {
             transition: all 0.5s ease-in-out;
         }
         
-        /* Ensures the container takes up minimum screen height */
+
         #app-container {
             min-height: 100vh;
         }
 
-        /* Styling for the Navigation buttons */
+
         .nav-button-dark {
-            @apply text-white border-2 border-red-600 hover:bg-red-600 transition duration-300 rounded-lg px-4 py-2 font-cinzel tracking-wider shadow-lg;
+            @apply w-full sm:w-auto text-white border-2 border-red-600 hover:bg-red-600 transition duration-300 rounded-lg px-4 py-2 font-cinzel tracking-wider shadow-lg;
         }
         .nav-button-cute {
-            @apply text-gray-800 border-2 border-pink-700 bg-pink-500 hover:bg-pink-400 transition duration-300 rounded-lg px-4 py-2 font-inter shadow-xl;
+            @apply w-full sm:w-auto text-gray-800 border-2 border-pink-700 bg-pink-500 hover:bg-pink-400 transition duration-300 rounded-lg px-4 py-2 font-inter shadow-xl;
         }
     </style>
 </head>
 <body class="font-inter">
 
-    <!-- Main Application Container -->
-    <!-- Default Dark/Wine-Red Theme -->
     <div id="app-container" class="bg-red-900 text-white flex flex-col items-center p-6 sm:p-10 content-transition">
 
-        <!-- Navigation Menu -->
         <nav id="nav-menu" class="flex flex-wrap justify-center gap-2 mb-10 w-full max-w-4xl p-4 bg-red-800/50 rounded-xl shadow-2xl">
-            <!-- Buttons will be rendered here by JavaScript -->
         </nav>
 
-        <!-- Main Content Area -->
         <main id="content-area" class="w-full max-w-4xl p-8 bg-red-950/70 rounded-2xl shadow-2xl border-4 border-red-700 content-transition">
-            <!-- Content will be injected here -->
         </main>
         
         <footer class="mt-8 text-center text-red-300 text-xs">
-            A Top-Secret Ardsley Lab Document (V 1.8)
+            A Top-Secret Ardsley Lab Document (V 1.9)
         </footer>
 
     </div>
 
     <script>
-        // Define all the pages, their navigation title, and content
+
+        const apiKey = ""; // Leave as-is for Canvas environment
+        const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=' + apiKey;
+        const systemPrompt = "You are a melodramatic, overly academic, and highly persuasive research assistant working for Dr. Carballo's Latin Department at Ardsley Lab. The goal is to write a short, formal plea (like a research abstract or executive summary) to Dr. Carballo, convincing him to supply candy sacrifices to Neha Ramchandani to defeat the evil 'Wang'. Incorporate cryptic, formal language. The plea must be brief (3-4 sentences max), use scholarly vocabulary, and maintain an urgent, dramatic tone.";
+
+        async function fetchWithRetry(url, options, maxRetries = 5) {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.status === 429 && i < maxRetries - 1) {
+                        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        continue; // Retry
+                    }
+                    if (!response.ok) {
+                        throw new Error('API error: ' + response.statusText);
+                    }
+                    return response;
+                } catch (error) {
+                    if (i === maxRetries - 1) throw error;
+                }
+            }
+        }
+        
+
+        async function generatePlea() {
+            const contributorName = document.getElementById('contributorName').value.trim();
+            const resultsDiv = document.getElementById('plea-results');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            
+            if (!contributorName) {
+                resultsDiv.innerHTML = '<p class="text-red-500 font-bold mt-4">ERROR: Please enter your name or alias to proceed with the petition. Protocol requires identification.</p>';
+                return;
+            }
+
+            loadingSpinner.classList.remove('hidden');
+            resultsDiv.innerHTML = '';
+            
+            const userQuery = 'Generate a highly urgent plea on behalf of contributor: "' + contributorName + '" to secure the necessary candy sacrifices from Dr. Carballo.';
+
+            try {
+                const response = await fetchWithRetry(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                    })
+                });
+                
+                const result = await response.json();
+                const rawGeneratedText = result.candidates?.[0]?.content?.parts?.[0]?.text || "Error: Failed to generate plea. Dark forces have intercepted the signal.";
+                const htmlText = rawGeneratedText.replace(/\n/g, '<br>');
+
+                resultsDiv.innerHTML =
+                    '<h3 class="text-2xl font-cinzel text-red-300 mt-8 mb-4">The Official Petition to Dr. Carballo</h3>' +
+                    '<div id="generated-plea-container" class="bg-red-800 p-6 rounded-lg border border-red-500 shadow-inner">' +
+                        '<p class="text-xl italic">' + htmlText + '</p>' +
+                        '<p class="mt-4 text-sm text-red-400 text-right">- Submitted by Researcher: ' + contributorName + '</p>' +
+                    '</div>';
+
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                resultsDiv.innerHTML = '<p class="text-red-500 font-bold mt-4">System failure: The dark forces of the Wang are interfering with the communication relay. Try again!</p>';
+            } finally {
+                loadingSpinner.classList.add('hidden');
+            }
+        }
+
+
         const pageData = {
             'home': {
                 navTitle: 'Home',
                 title: 'Welcome to zoeywang.com',
-                content: `
-                    <h2 class="text-3xl sm:text-4xl font-inter mt-4 tracking-widest text-red-300">
-                        discover the hidden secrets of the evil mastermind Zoey Wang
-                    </h2>
-                `,
+                content: '<h2 class="text-3xl sm:text-4xl font-inter mt-4 tracking-widest text-red-300">discover the hidden secrets of the evil mastermind Zoey Wang</h2>',
                 theme: 'dark'
             },
             'awakening': {
                 navTitle: "The Devil's Awakening",
                 title: "The Devil's Awakening",
-                content: `
-                    <p class="text-lg leading-relaxed mt-6">
-                        Zoey Wang was born July 4, 2011, at 2:03 AM to Shu-Yuan Wu and Hsien-Tseng Wang at the New York Presbyterian Hospital. 
-                        The nurses described the birth as "eerily quiet." The only sound was a faint, unsettling hum.
-                    </p>
-                `,
+                content: '<p class="text-lg leading-relaxed mt-6">Zoey Wang was born July 4, 2011, at 2:03 AM to Shu-Yuan Wu and Hsien-Tseng Wang at the New York Presbyterian Hospital. The nurses described the birth as "eerily quiet." The only sound was a faint, unsettling hum.</p>',
                 theme: 'dark'
             },
             'upbringing': {
                 navTitle: 'The Upbringing',
                 title: 'The Upbringing',
-                content: `
-                    <p class="text-lg leading-relaxed mt-6">
-                        Our research indicates that Zoey Wang was corrupted on November 19, 2017, at 4:56PM. The exact mechanism of this corruption remains unknown, but it coincided with the local broadcast of a very specific children's song. 
-                        The darkness, once invited, never truly leaves.
-                    </p>
-                `,
+                content: '<p class="text-lg leading-relaxed mt-6">Our research indicates that Zoey Wang was corrupted on November 19, 2017, at 4:56 PM. The exact mechanism of this corruption remains unknown, but it coincided with the local broadcast of a very specific children\'s song. The darkness, once invited, never truly leaves.</p>',
                 theme: 'dark'
             },
             'scholarly': {
                 navTitle: 'Scholarly Concerns',
                 title: 'Scholarly Concerns',
-                content: `
-                    <p class="text-lg leading-relaxed mt-6">
-                        Zoey Wang has been detained in a maximum-security laboratory in Ardsley, NY, since 2020. 
-                        Professors have been conducting multiple experiments on her, attempting to wash away her evil. 
-                        The Education Department, in particular, fears her capacity to corrupt verb conjugations, biological tools, and mathematical proofs.
-                    </p>
-                `,
+                content: '<p class="text-lg leading-relaxed mt-6">Zoey Wang has been detained in a maximum-security laboratory in Ardsley, NY, since 2020. Professors have been conducting multiple experiments on her, attempting to wash away her evil. The Education Department, in particular, fears her capacity to corrupt verb conjugations, biological tools, and mathematical proofs.</p>',
                 theme: 'dark'
             },
             'defeating': {
                 navTitle: 'Defeating the Devil',
                 title: 'Defeating the Devil',
-                content: `
-                    <p class="text-lg leading-relaxed mt-6">
-                        Over years of research, the professors of Ardsley have found a way to liberate humankind from the Wang. They have found a sweet summer child named Neha Ramchandani who seems to be capable of this profound task.
-                    </p>
-                    <p class="text-lg leading-relaxed mt-4 font-bold text-red-400">
-                        Neha, upon profiling the Wang for three months, has found that the only way to soothe the Wang is to offer candy sacrifices.
-                    </p>
-                    <p class="text-lg leading-relaxed mt-4">
-                        Neha has also found that Ardsley Laboratory Latin researcher Dr. Carballo is the best supplier of these vital candy sacrifices. His knowledge of ancient sugar structures is unparalleled.
-                    </p>
-                `,
+                content: 
+                    '<p class="text-lg leading-relaxed mt-6">Over years of research, the professors of Ardsley have found a way to liberate humankind from the Wang. They have found a sweet summer child named **Neha Ramchandani** who seems to be capable of this profound task.</p>' +
+                    '<p class="text-lg leading-relaxed mt-4 font-bold text-red-400">Neha, upon profiling the Wang for three months, has found that the only way to soothe the Wang is to offer candy sacrifices.</p>' +
+                    '<p class="text-lg leading-relaxed mt-4">Neha has also found that Ardsley Laboratory Latin researcher Dr. Carballo is the best supplier of these vital candy sacrifices. His knowledge of ancient sugar structures is unparalleled.</p>',
                 theme: 'dark'
             },
             'help': {
                 navTitle: 'How you can help',
                 title: 'How you can help',
-                content: `
-                    <p class="text-xl leading-relaxed mt-6 font-cinzel text-red-300">
-                        You can help by assisting Neha retrieve these candy sacrifices from Dr. Carballo and convincing him to be her dedicated supplier.
-                    </p>
-                    <p class="text-xl leading-relaxed mt-4 font-bold">
-                        Your names will go down in history books if you help Neha defeat the Wang! (And possibly get extra credit.)
-                    </p>
-                `,
+                content: 
+                    '<p class="text-xl leading-relaxed mt-6 font-cinzel text-red-300">You can help by assisting Neha retrieve these candy sacrifices from Dr. Carballo and convincing him to be her dedicated supplier.</p>' +
+                    '<p class="text-xl leading-relaxed mt-4 font-bold">Your names will go down in history books if you help Neha defeat the Wang!</p>' +
+                    
+                    '<!-- Gemini API Integration: Plea Generator -->' +
+                    '<div class="mt-10 p-6 bg-red-900 rounded-xl shadow-2xl border-2 border-red-600">' +
+                        '<h3 class="text-2xl font-cinzel mb-4 text-red-100">Operation: Candy Conviction ✨</h3>' +
+                        '<p class="mb-4 text-sm text-red-300">Enter your name or researcher alias below to generate a irrefutable petition to Dr. Carballo, detailing the critical necessity of his sacrifice supply chain.</p>' +
+                        
+                        '<input id="contributorName" type="text" placeholder="Your Researcher Alias (e.g., Dr. N. Ramchandani)" ' +
+                            'class="w-full p-3 rounded-lg bg-red-800 text-white border border-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 font-inter" />' +
+                        
+                        '<button onclick="generatePlea()" class="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 shadow-md">' +
+                            '✨ Generate Plea ✨' +
+                        '</button>' +
+
+                        '<!-- Loading Spinner -->' +
+                        '<div id="loading-spinner" class="hidden text-center mt-6">' +
+                            '<div class="animate-spin inline-block w-8 h-8 border-4 border-red-400 border-t-transparent rounded-full"></div>' +
+                            '<p class="mt-2 text-red-400">Consulting the ancient texts...</p>' +
+                        '</div>' +
+                        
+                        '<!-- Results Area -->' +
+                        '<div id="plea-results" class="mt-4"></div>' +
+                    '</div>',
                 theme: 'dark'
             },
             'reveal': {
                 navTitle: '???',
                 title: 'The Great Betrayal',
-                content: `
-                    <p class="text-3xl sm:text-4xl font-cinzel font-bold mt-6 text-gray-900">
-                        jk jk this was all a joke but surely it was ethos at its best right
-                    </p>
-                    <p class="text-xl sm:text-2xl font-inter mt-8 text-gray-700">
-                        pls give us the candy Mr. Carballo tysm we love u
-                    </p>
-                    <p class="text-lg sm:text-xl font-inter mt-6 text-gray-700">
-                        Also pls support <a href="https://www.instagram.com/dailydose_of_bio/" target="_blank" class="text-pink-800 underline font-bold">@dailydose_of_bio</a> on instagram! I'm offering leadership positions if anyone's interested.
-                    </p>
-                    <p class="text-base sm:text-lg font-inter mt-6 text-gray-600">
-                        btw Zoey made this so u better give us the candy u can't lie this website is lowk pretty good
-                    </p>
-                `,
+                content: 
+                    '<p class="text-3xl sm:text-4xl font-cinzel font-bold mt-6 text-gray-900">jk jk this was all a joke but surely it was ethos at its best right</p>' +
+                    '<p class="text-xl sm:text-2xl font-inter mt-8 text-gray-700">pls give us the candy Mr. Carballo tysm we love u</p>' +
+                    '<p class="text-lg sm:text-xl font-inter mt-6 text-gray-700">Also pls support <a href="https://www.instagram.com/dailydose_of_bio/" target="_blank" class="text-pink-800 underline font-bold">@dailydose_of_bio</a> on instagram! I\'m offering leadership positions if anyone\'s interested.</p>' +
+                    '<p class="text-base sm:text-lg font-inter mt-6 text-gray-600">btw Zoey made this so u better give us the candy u can\'t lie this website is lowk pretty good</p>',
                 theme: 'cute' // This triggers the pink theme change
             }
         };
@@ -154,7 +198,6 @@
         const contentArea = document.getElementById('content-area');
         const navMenu = document.getElementById('nav-menu');
 
-        // --- Core Rendering Function ---
         function renderPage(pageId) {
             const page = pageData[pageId];
             if (!page) {
@@ -163,7 +206,6 @@
                 page = pageData[pageId];
             }
 
-            // 1. Handle Theme Change (The Big Prank Reveal)
             if (page.theme === 'cute') {
                 appContainer.className = 'font-inter bg-pink-300 text-gray-900 flex flex-col items-center p-6 sm:p-10 content-transition';
                 contentArea.className = 'w-full max-w-4xl p-8 bg-white rounded-2xl shadow-2xl border-4 border-pink-500 content-transition';
@@ -175,24 +217,19 @@
                 navMenu.className = 'flex flex-wrap justify-center gap-2 mb-10 w-full max-w-4xl p-4 bg-red-800/50 rounded-xl shadow-2xl content-transition';
             }
 
-            // 2. Render Content
-            contentArea.innerHTML = `
-                <div class="p-4">
-                    <h1 class="text-5xl sm:text-7xl font-cinzel font-bold text-white content-transition mb-6 ${page.theme === 'cute' ? 'text-pink-800' : 'text-white'}">
-                        ${page.title}
-                    </h1>
-                    ${page.content}
-                </div>
-            `;
+            contentArea.innerHTML = 
+                '<div class="p-4">' +
+                    '<h1 class="text-5xl sm:text-7xl font-cinzel font-bold text-white content-transition mb-6 ' + (page.theme === 'cute' ? 'text-pink-800' : 'text-white') + '">' +
+                        page.title +
+                    '</h1>' +
+                    page.content +
+                '</div>';
             
-            // 3. Re-render Navigation with correct button styles
             renderNavigation(page.theme, pageId);
             
-            // 4. Update URL Hash
             history.pushState(null, '', '#' + pageId);
         }
 
-        // --- Navigation Rendering Function ---
         function renderNavigation(currentTheme, activePageId) {
             navMenu.innerHTML = ''; // Clear existing buttons
             Object.keys(pageData).forEach(pageId => {
@@ -201,7 +238,6 @@
                 button.textContent = page.navTitle;
                 button.onclick = () => renderPage(pageId);
 
-                // Determine button styling based on current theme and active status
                 let buttonClass = currentTheme === 'cute' ? 'nav-button-cute' : 'nav-button-dark';
                 
                 if (pageId === activePageId) {
@@ -218,14 +254,13 @@
             });
         }
 
-        // --- Initial Load Logic ---
         window.onload = function() {
-            // Check the URL hash on load to determine the initial page
+
             const initialPageId = window.location.hash.substring(1) || 'home';
             renderPage(initialPageId);
         };
         
-        // Handle browser back/forward buttons (popstate)
+
         window.addEventListener('popstate', () => {
             const pageId = window.location.hash.substring(1) || 'home';
             renderPage(pageId);
@@ -234,4 +269,3 @@
     </script>
 </body>
 </html>
-
