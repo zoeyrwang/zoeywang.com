@@ -4,24 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>zoeywang.com</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;700&display=swap');
         .font-cinzel { font-family: 'Cinzel', serif; }
         .font-inter { font-family: 'Inter', sans-serif; }
-
 
         .content-transition {
             transition: all 0.5s ease-in-out;
         }
         
-
         #app-container {
             min-height: 100vh;
         }
-
 
         .nav-button-dark {
             @apply w-full sm:w-auto text-white border-2 border-red-600 hover:bg-red-600 transition duration-300 rounded-lg px-4 py-2 font-cinzel tracking-wider shadow-lg;
@@ -48,8 +43,7 @@
     </div>
 
     <script>
-
-        const apiKey = ""; // Leave as-is for Canvas environment
+        const apiKey = "";
         const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=' + apiKey;
         const systemPrompt = "You are a melodramatic, overly academic, and highly persuasive research assistant working for Dr. Carballo's Latin Department at Ardsley Lab. The goal is to write a short, formal plea (like a research abstract or executive summary) to Dr. Carballo, convincing him to supply candy sacrifices to Neha Ramchandani to defeat the evil 'Wang'. Incorporate cryptic, formal language. The plea must be brief (3-4 sentences max), use scholarly vocabulary, and maintain an urgent, dramatic tone.";
 
@@ -60,7 +54,7 @@
                     if (response.status === 429 && i < maxRetries - 1) {
                         const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
                         await new Promise(resolve => setTimeout(resolve, delay));
-                        continue; // Retry
+                        continue;
                     }
                     if (!response.ok) {
                         throw new Error('API error: ' + response.statusText);
@@ -72,7 +66,6 @@
             }
         }
         
-
         async function generatePlea() {
             const contributorName = document.getElementById('contributorName').value.trim();
             const resultsDiv = document.getElementById('plea-results');
@@ -159,7 +152,6 @@
                     '<p class="text-xl leading-relaxed mt-6 font-cinzel text-red-300">You can help by assisting Neha retrieve these candy sacrifices from Dr. Carballo and convincing him to be her dedicated supplier.</p>' +
                     '<p class="text-xl leading-relaxed mt-4 font-bold">Your names will go down in history books if you help Neha defeat the Wang!</p>' +
                     
-                    '<!-- Gemini API Integration: Plea Generator -->' +
                     '<div class="mt-10 p-6 bg-red-900 rounded-xl shadow-2xl border-2 border-red-600">' +
                         '<h3 class="text-2xl font-cinzel mb-4 text-red-100">Operation: Candy Conviction ✨</h3>' +
                         '<p class="mb-4 text-sm text-red-300">Enter your name or researcher alias below to generate a irrefutable petition to Dr. Carballo, detailing the critical necessity of his sacrifice supply chain.</p>' +
@@ -171,13 +163,11 @@
                             '✨ Generate Plea ✨' +
                         '</button>' +
 
-                        '<!-- Loading Spinner -->' +
                         '<div id="loading-spinner" class="hidden text-center mt-6">' +
                             '<div class="animate-spin inline-block w-8 h-8 border-4 border-red-400 border-t-transparent rounded-full"></div>' +
                             '<p class="mt-2 text-red-400">Consulting the ancient texts...</p>' +
                         '</div>' +
                         
-                        '<!-- Results Area -->' +
                         '<div id="plea-results" class="mt-4"></div>' +
                     '</div>',
                 theme: 'dark'
@@ -186,11 +176,11 @@
                 navTitle: '???',
                 title: 'The Great Betrayal',
                 content: 
-                    '<p class="text-3xl sm:text-4xl font-cinzel font-bold mt-6 text-gray-900">jk jk this was all a joke but surely it was ethos at its best right</p>' +
+                    '<p class="text-3xl sm:text-4xl font-cinzel font-bold mt-6 text-gray-900">jk jk this was all a joke but surely it was coding at its best right</p>' +
                     '<p class="text-xl sm:text-2xl font-inter mt-8 text-gray-700">pls give us the candy Mr. Carballo tysm we love u</p>' +
                     '<p class="text-lg sm:text-xl font-inter mt-6 text-gray-700">Also pls support <a href="https://www.instagram.com/dailydose_of_bio/" target="_blank" class="text-pink-800 underline font-bold">@dailydose_of_bio</a> on instagram! I\'m offering leadership positions if anyone\'s interested.</p>' +
                     '<p class="text-base sm:text-lg font-inter mt-6 text-gray-600">btw Zoey made this so u better give us the candy u can\'t lie this website is lowk pretty good</p>',
-                theme: 'cute' // This triggers the pink theme change
+                theme: 'cute'
             }
         };
 
@@ -201,7 +191,6 @@
         function renderPage(pageId) {
             const page = pageData[pageId];
             if (!page) {
-                // Default to home if pageId is invalid
                 pageId = 'home';
                 page = pageData[pageId];
             }
@@ -211,7 +200,6 @@
                 contentArea.className = 'w-full max-w-4xl p-8 bg-white rounded-2xl shadow-2xl border-4 border-pink-500 content-transition';
                 navMenu.className = 'flex flex-wrap justify-center gap-2 mb-10 w-full max-w-4xl p-4 bg-pink-200/80 rounded-xl shadow-2xl content-transition';
             } else {
-                // Reset to default Dark/Wine-Red Theme
                 appContainer.className = 'font-inter bg-red-900 text-white flex flex-col items-center p-6 sm:p-10 content-transition';
                 contentArea.className = 'w-full max-w-4xl p-8 bg-red-950/70 rounded-2xl shadow-2xl border-4 border-red-700 content-transition';
                 navMenu.className = 'flex flex-wrap justify-center gap-2 mb-10 w-full max-w-4xl p-4 bg-red-800/50 rounded-xl shadow-2xl content-transition';
@@ -231,7 +219,7 @@
         }
 
         function renderNavigation(currentTheme, activePageId) {
-            navMenu.innerHTML = ''; // Clear existing buttons
+            navMenu.innerHTML = '';
             Object.keys(pageData).forEach(pageId => {
                 const page = pageData[pageId];
                 const button = document.createElement('button');
@@ -241,7 +229,6 @@
                 let buttonClass = currentTheme === 'cute' ? 'nav-button-cute' : 'nav-button-dark';
                 
                 if (pageId === activePageId) {
-                    // Visually mark the active page
                     if (currentTheme === 'cute') {
                         buttonClass += ' bg-pink-700 text-white shadow-inner';
                     } else {
@@ -255,12 +242,10 @@
         }
 
         window.onload = function() {
-
             const initialPageId = window.location.hash.substring(1) || 'home';
             renderPage(initialPageId);
         };
         
-
         window.addEventListener('popstate', () => {
             const pageId = window.location.hash.substring(1) || 'home';
             renderPage(pageId);
