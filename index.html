@@ -10,7 +10,6 @@
         .font-cinzel { font-family: 'Cinzel', serif; }
         .font-inter { font-family: 'Inter', sans-serif; }
 
-        /* General UI Transitions */
         .content-transition {
             transition: all 0.5s ease-in-out;
         }
@@ -47,32 +46,90 @@
 
     <script>
         
-        // --- Core Function to Generate the Plea (Now Simulated) ---
-        function generatePlea() {
+
+        const apiKey = ""; // API key is provided at runtime
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        
+        const systemPrompt = "You are a scholarly, extremely dramatic, and slightly cryptic researcher from a maximum-security lab. Your task is to write a single paragraph, irrefutable petition to 'Dr. Carballo'. The content MUST be about the critical need for 'Neha Ramchandani' to have candy immediately to pacify a high-risk entity known only as 'The Wang'. Use sophisticated, academic, and highly urgent language. The petition must be exactly one paragraph long.";
+
+        async function fetchWithRetry(url, options, retries = 3) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        // Throw error if response status is not 2xx
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response;
+                } catch (error) {
+                    if (i === retries - 1) {
+                        throw error;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+                }
+            }
+        }
+
+
+        async function generatePlea() {
             const contributorName = document.getElementById('contributorName').value.trim();
             const resultsDiv = document.getElementById('plea-results');
+            const loadingSpinner = document.getElementById('loading-spinner');
             
-            // Input validation
             if (!contributorName) {
                 resultsDiv.innerHTML = '<p class="text-red-500 font-bold mt-4">ERROR: Please enter your name or alias to proceed with the petition. Protocol requires identification.</p>';
                 return;
             }
 
-            // Simulate success with a fixed message
-            const fakePlea = "By the authority invested in the Ardsley Semiotics Containment Unit, we urgently implore Dr. Carballo to dispatch Glycemic Containment Agents immediately. Operative Ramchandani requires these ritualistic sucrose offerings to maintain the precarious equilibrium and avert a Type-III ontological divergence caused by the proximal threat.";
-            
-            // Display the results
+            resultsDiv.innerHTML = '';
+            loadingSpinner.classList.remove('hidden');
+
+            const userQuery = `Write the petition. The author's name is ${contributorName}. It is scholarly, melodramatic, and sophisticating, pleading Mr. Carballo to give Neha candy to pacify the Wang. Make it 3-4 sentences, hilariously nonsensical with a bunch of scholarly terms yet asking for candy that will surely have everyone laughing out loud.`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+            };
+
+            const options = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            };
+
+            let generatedText = '';
+            try {
+                const response = await fetchWithRetry(apiUrl, options);
+                const result = await response.json();
+                
+                const candidate = result.candidates?.[0];
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    generatedText = candidate.content.parts[0].text;
+                } else {
+                    // Fallback if API response is valid but text part is missing
+                    generatedText = "API Response Error: The ancient texts returned an illegible cipher. The plea could not be formulated. Retrying communication is mandatory.";
+                }
+
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                // Fallback message for network/HTTP errors
+                generatedText = "NETWORK BREACH DETECTED: Communication line to the Scholarly Nexus has failed. Dr. Carballo remains oblivious to the impending sucrose crisis. A local message must be formulated immediately.";
+            } finally {
+                loadingSpinner.classList.add('hidden');
+            }
+
             resultsDiv.innerHTML =
-                '<h3 class="text-2xl font-cinzel text-red-300 mt-8 mb-4">The Official Petition to Dr. Carballo (Simulated)</h3>' +
+                '<h3 class="text-2xl font-cinzel text-red-300 mt-8 mb-4">The Official Petition to Dr. Carballo (Generated via Nexus)</h3>' +
                 '<div id="generated-plea-container" class="bg-red-800 p-6 rounded-lg border border-red-500 shadow-inner">' +
-                    '<p class="text-xl italic">' + fakePlea + '</p>' +
+                    '<p class="text-xl italic">' + generatedText + '</p>' +
                     '<p class="mt-4 text-sm text-red-400 text-right">- Submitted by Researcher: ' + contributorName + '</p>' +
                 '</div>' +
-                '<p class="mt-2 text-sm text-red-400">Plea successfully generated locally. No external communication was risked.</p>';
+                '<p class="mt-2 text-sm text-red-400">Plea successfully generated and logged in the Ardsley archives.</p>';
         }
 
 
-        // --- Page Navigation Data ---
         const pageData = {
             'home': {
                 navTitle: 'Home',
@@ -136,7 +193,7 @@
             },
             'reveal': {
                 navTitle: '???',
-                title: 'The Great Betrayal',
+                title: 'LMAO ALL OF THIS WAS FAKE HEHEHEHE',
                 content: 
                     '<p class="text-3xl sm:text-4xl font-cinzel font-bold mt-6 text-gray-900">jk jk this was all a joke but surely it was coding at its best right</p>' +
                     '<p class="text-xl sm:text-2xl font-inter mt-8 text-gray-700">pls give us the candy Mr. Carballo tysm we love u</p>' +
@@ -151,14 +208,12 @@
         let navMenu;
 
         function renderPage(pageId) {
-            // These variables are now guaranteed to be defined because this function is called inside window.onload
             const page = pageData[pageId];
             if (!page) {
                 pageId = 'home';
                 page = pageData[pageId];
             }
 
-            // Theme application
             if (page.theme === 'cute') {
                 appContainer.className = 'font-inter bg-pink-300 text-gray-900 flex flex-col items-center p-6 sm:p-10 content-transition';
                 contentArea.className = 'w-full max-w-4xl p-8 bg-white rounded-2xl shadow-2xl border-4 border-pink-500 content-transition';
@@ -169,7 +224,6 @@
                 navMenu.className = 'flex flex-wrap justify-center gap-2 mb-10 w-full max-w-4xl p-4 bg-red-800/50 rounded-xl shadow-2xl content-transition';
             }
 
-            // Render content
             contentArea.innerHTML = 
                 '<div class="p-4">' +
                     '<h1 class="text-5xl sm:text-7xl font-cinzel font-bold text-white content-transition mb-6 ' + (page.theme === 'cute' ? 'text-pink-800' : 'text-white') + '">' +
@@ -178,14 +232,14 @@
                     page.content +
                 '</div>';
             
-            // Render navigation
+
             renderNavigation(page.theme, pageId);
             
             history.pushState(null, '', '#' + pageId);
         }
 
         function renderNavigation(currentTheme, activePageId) {
-            // Note: navMenu is now globally defined (or defined in onload) and usable here
+
             navMenu.innerHTML = '';
             Object.keys(pageData).forEach(pageId => {
                 const page = pageData[pageId];
@@ -209,7 +263,6 @@
         }
 
         window.onload = function() {
-            // Initialize global variables once the DOM is ready
             appContainer = document.getElementById('app-container');
             contentArea = document.getElementById('content-area');
             navMenu = document.getElementById('nav-menu');
